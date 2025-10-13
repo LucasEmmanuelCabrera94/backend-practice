@@ -1,108 +1,68 @@
-# backend-practice
+# Backend Practice - Go + MySQL + Docker
 
-Servicio HTTP de práctica.
+Este proyecto es una API backend desarrollada en Go, usando MySQL como base de datos y corriendo en contenedores Docker. Está diseñada para ser fácil de levantar y probar, ideal para mostrar tu stack a recruiters o colegas.
 
-Requisitos
+## Requisitos
 
-- Go 1.20+ (se probó con 1.22.3)
+- [Docker](https://www.docker.com/) instalado
+- [Docker Compose](https://docs.docker.com/compose/install/) (generalmente viene con Docker Desktop)
 
-Ejecutar
+> No es necesario tener Go ni MySQL instalados localmente, todo corre dentro de contenedores.
 
-Desde la raíz del módulo (donde está `go.mod`):
+## Levantar la app
+
+Desde la raíz del proyecto:
 
 ```bash
-# Ejecuta usando el Makefile (usa CGO deshabilitado por defecto)
-make run
+docker compose up -d
 ```
 
-Alternativa sin Makefile:
+Esto hará lo siguiente:
 
 ```bash
-# Ejecutar directamente (deshabilita cgo si tienes problemas con dyld en macOS)
-CGO_ENABLED=0 go run ./cmd
+Levantar un contenedor de MySQL (backend_mysql) con la base de datos backend.
+Levantar un contenedor de la API (backend_app) corriendo en http://localhost:8080.
+Exponer el puerto 8080 para interactuar con la API desde Postman, curl o tu navegador.
 ```
 
-Notas
+## Endpoints disponibles:
 
-- Si dependes de C libraries o necesitas cgo, asegúrate de tener las Xcode Command Line Tools instaladas:
+```
+GET /health → Verifica que la API esté levantada.
 
-```bash
-xcode-select --install
+POST /users → Crear un nuevo usuario en la base de datos.
 ```
 
-Si tienes problemas con el enlazador dinámico (`dyld`) al usar `go run`, intenta compilar con `go build` y ejecutar el binario resultante para obtener más información.
+Puedes usar Postman o curl para probar los endpoints.
 
-## Docker
-
-Puedes construir y ejecutar la imagen Docker usando los targets del `Makefile`:
-
-````bash
-# backend-practice
-
-Pequeña API en Go diseñada como proyecto de práctica y demostración técnica.
-
-Descripción
------------
-Servicio HTTP mínimo que expone un endpoint `/health`. El objetivo es mostrar una estructura de proyecto Go ordenada, buenas prácticas de build y despliegue con Docker.
-
-Requisitos
----------
-- Go 1.22.3 (fijado en `go.mod`)
-- Docker (opcional, para construir y ejecutar imágenes)
-
-Estructura clave
-----------------
-- `cmd/` — puntos de entrada (main)
-- `internal/infra/transport` — router y handlers
-- `Makefile` — tareas comunes (run, build, docker-* )
-- `dockerfile` — Dockerfile multi-stage para builds reproducibles
-
-Ejecutar localmente
--------------------
-1. Desde la raíz del proyecto (donde está `go.mod`):
+### Ejemplo con curl:
 
 ```bash
-# Ejecuta la aplicación (Makefile usa CGO deshabilitado por defecto)
-make run
-````
-
-2. Comprobá el endpoint:
-
-```bash
-curl http://localhost:8080/health
-# -> {"status":"ok"}
+curl --location 'http://localhost:8080/health'
 ```
 
-Alternativa sin Makefile:
+### Variables de entorno
+
+Las variables de configuración de la base de datos se encuentran en .env.example. La app automáticamente las carga desde ahí, por lo que no es necesario hacer export manualmente.
+Variables principales:
 
 ```bash
-CGO_ENABLED=0 go run ./cmd
+MYSQL_ROOT_PASSWORD=rootpw
+MYSQL_USER=backend
+MYSQL_PASSWORD=backendpw
+MYSQL_DATABASE=backend
+MYSQL_HOST_PORT=3306
+APP_PORT=8080
 ```
 
-## Notas sobre CGO y macOS
+### Detalles técnicos
 
-En macOS (especialmente en M1/M2) la compilación con `cgo` activado puede causar errores del enlazador (dyld). Para reproducibilidad y evitar esos errores en desarrollo usamos `CGO_ENABLED=0`. Si necesitás cgo por dependencias nativas, compilá dentro de un contenedor Linux o asegurate de tener las Xcode Command Line Tools instaladas (`xcode-select --install`).
-
-## Docker
-
-El proyecto incluye un `dockerfile` multi-stage que compila el binario (estático, sin cgo) y produce una imagen final mínima (distroless nonroot).
-
-## Comandos útiles (Makefile)
-
-```bash
-# Construir imagen (etiqueta: auth-service)
-make docker-build
-
-# Ejecutar la imagen en background (mapea puerto 8080)
-make docker-run
-
-# Parar y eliminar el contenedor de ejemplo
-make docker-stop
-```
-
-Durante la sesión se creó además una etiqueta de imagen `auth-service:secure` (imagen optimizada/minimal). Para auditoría, escaneá la imagen con `trivy` o `grype`:
-
-```bash
-# ejemplo con trivy
-trivy image auth-service:secure
-```
+Go 1.24
+MySQL 8.0
+Gin como framework HTTP
+Arquitectura hexagonal: separando core, usecases y repositorios
+Docker para contenedores y portabilidad
+docker-compose para orquestar app y DB
+Cómo parar los contenedores
+docker compose down
+Esto detiene y elimina los contenedores sin borrar los datos gracias al volumen persistente db_data.
