@@ -4,10 +4,17 @@ import (
 	"backend-practice/internal/core/entity"
 	"backend-practice/internal/core/port"
 	"database/sql"
+	"errors"
 )
+
+	var ErrUserNotFound = errors.New("user not found")
 
 type userRepository struct {
 	db *sql.DB
+}
+
+func NewUserRepository(db *sql.DB) port.UserPort {
+	return &userRepository{db: db}
 }
 
 func (r *userRepository) GetUserByEmail(email string) (entity.User, error) {
@@ -16,15 +23,11 @@ func (r *userRepository) GetUserByEmail(email string) (entity.User, error) {
 	err := row.Scan(&u.ID, &u.Name, &u.Email, &u.PasswordHash)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return entity.User{}, nil
+			return entity.User{}, ErrUserNotFound
 		}
 		return entity.User{}, err
 	}
 	return u, nil
-}
-
-func NewUserRepository(db *sql.DB) port.UserPort {
-	return &userRepository{db: db}
 }
 
 func (r *userRepository) CreateUser(u entity.User) (entity.User, error) {

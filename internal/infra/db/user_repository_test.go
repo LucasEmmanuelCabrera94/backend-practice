@@ -38,3 +38,20 @@ func TestAddUser(t *testing.T) {
 	assert.NotZero(t, createdUser.ID)
 	assert.Equal(t, "Lucas", createdUser.Name)
 }
+
+func TestGetUserByEmail(t *testing.T) {
+	dbConn := setupTestDB(t)
+	repo := db.NewUserRepository(dbConn)
+
+	user := entity.User{Name: "Lucas", Email: "lucas@example.com", PasswordHash: "hashedpassword"}
+	createdUser, err := repo.CreateUser(user)
+	assert.NoError(t, err)
+
+	fetchedUser, err := repo.GetUserByEmail("lucas@example.com")
+	assert.NoError(t, err)
+	assert.Equal(t, createdUser.ID, fetchedUser.ID)
+	assert.Equal(t, createdUser.Name, fetchedUser.Name)
+
+	_, err = repo.GetUserByEmail("noone@example.com")
+	assert.Error(t, err)
+}

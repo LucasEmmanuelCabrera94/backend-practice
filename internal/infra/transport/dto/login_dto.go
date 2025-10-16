@@ -7,5 +7,5 @@ type LoginRequest struct {
 
 type LoginResponse struct {
 	Token string `json:"token"`
-	User  interface{} `json:"user"`
+	User  UserResponse `json:"user"`
 }

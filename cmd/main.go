@@ -25,10 +25,11 @@ func main() {
 	defer sqlDB.Close()
 
 	userRepo := db.NewUserRepository(sqlDB)
+	sessionRepo := db.NewSessionRepository(sqlDB)
 	jwtService := jwt.NewJWTService(cfg.JWTSecret)
 
 	createUserUC := *usecase.NewCreateUserUseCase(userRepo)
-	loginUseCase := *usecase.NewLoginUseCase(userRepo, jwtService)
+	loginUseCase := *usecase.NewLoginUseCase(userRepo, jwtService, sessionRepo)
 
 	healthHandler := handler.NewHealthHandler()
 	userHandler := handler.NewUserHandler(createUserUC)
