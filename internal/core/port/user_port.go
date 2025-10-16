@@ -1,7 +1,10 @@
 package port
 
-import "backend-practice/internal/core/entity"
+import (
+	"backend-practice/internal/core/entity"
+)
 
-type CreateUserPort interface {
-	CreateUser(name, email string) (entity.User, error)
+type UserPort interface {
+	CreateUser(req entity.User) (entity.User, error)
+	GetUserByEmail(email string) (entity.User, error)
 }

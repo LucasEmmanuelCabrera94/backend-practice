@@ -8,32 +8,31 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type UserHandler struct{
-	uc usecase.UserUseCase
+type LoginHandler struct{
+	uc usecase.LoginUseCase
 }
 
-func NewUserHandler(uc usecase.UserUseCase) *UserHandler {
-	return &UserHandler{uc: uc}
+func NewLoginHandler(uc usecase.LoginUseCase) *LoginHandler {
+	return &LoginHandler{uc: uc}
 }
 
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var req dto.CreateUserRequest
+func (h *LoginHandler) Login(c *gin.Context) {
+	var req dto.LoginRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
 	}
 
-	user, err := h.uc.CreateUser(req)
+	r, err := h.uc.Login(req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "User created successfully",
-		"id":      user.ID,
-		"name":    user.Name,
-		"email":   user.Email,
+		"message": "Login successful",
+		"token":   r.Token,
+		"user":    r.User,
 	})
 }

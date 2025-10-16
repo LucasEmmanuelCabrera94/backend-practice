@@ -2,6 +2,7 @@ package handler_test
 
 import (
 	"backend-practice/internal/core/entity"
+	"backend-practice/internal/infra/transport/dto"
 	"backend-practice/internal/infra/transport/handler"
 	"bytes"
 	"encoding/json"
@@ -15,12 +16,12 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockCreateUserUseCase struct {
+type mockUserUseCase struct {
 	mock.Mock
 }
 
-func (m *mockCreateUserUseCase) CreateUser(name, email string) (entity.User, error) {
-	args := m.Called(name, email)
+func (m *mockUserUseCase) CreateUser(req dto.CreateUserRequest) (entity.User, error) {
+	args := m.Called(req)
 	return args.Get(0).(entity.User), args.Error(1)
 }
 
@@ -31,16 +32,15 @@ func setupRouter(h *handler.UserHandler) *gin.Engine {
 }
 
 func TestCreateUser_Success(t *testing.T) {
-	mockUC := new(mockCreateUserUseCase)
+	mockUC := new(mockUserUseCase)
 	h := handler.NewUserHandler(mockUC)
 	router := setupRouter(h)
 
-	// agregamos password para cumplir el binding
 	body := map[string]string{"name": "Lucas", "email": "lucas@mail.com", "password": "secretpw"}
 	jsonBody, _ := json.Marshal(body)
 
-	expectedUser := entity.User{ID: 1, Name: "Lucas", Email: "lucas@mail.com"}
-	mockUC.On("CreateUser", "Lucas", "lucas@mail.com").Return(expectedUser, nil)
+	expectedUser := entity.User{ID: 1, Name: "Lucas", Email: "lucas@mail.com", Password: "secretpw"}
+	mockUC.On("CreateUser", mock.AnythingOfType("dto.CreateUserRequest")).Return(expectedUser, nil)
 
 	req, _ := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")
@@ -53,11 +53,10 @@ func TestCreateUser_Success(t *testing.T) {
 }
 
 func TestCreateUser_InvalidRequest(t *testing.T) {
-	mockUC := new(mockCreateUserUseCase)
+	mockUC := new(mockUserUseCase)
 	h := handler.NewUserHandler(mockUC)
 	router := setupRouter(h)
 
-	// JSON inválido
 	req, _ := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer([]byte(`{invalid-json}`)))
 	req.Header.Set("Content-Type", "application/json")
 	w := httptest.NewRecorder()
@@ -69,15 +68,14 @@ func TestCreateUser_InvalidRequest(t *testing.T) {
 }
 
 func TestCreateUser_UseCaseError(t *testing.T) {
-	mockUC := new(mockCreateUserUseCase)
+	mockUC := new(mockUserUseCase)
 	h := handler.NewUserHandler(mockUC)
 	router := setupRouter(h)
 
-	// agregamos password para cumplir el binding
 	body := map[string]string{"name": "Lucas", "email": "lucas@mail.com", "password": "secretpw"}
 	jsonBody, _ := json.Marshal(body)
 
-	mockUC.On("CreateUser", "Lucas", "lucas@mail.com").Return(entity.User{}, errors.New("invalid user data"))
+	mockUC.On("CreateUser", mock.AnythingOfType("dto.CreateUserRequest")).Return(entity.User{}, errors.New("invalid user data"))
 
 	req, _ := http.NewRequest(http.MethodPost, "/users", bytes.NewBuffer(jsonBody))
 	req.Header.Set("Content-Type", "application/json")

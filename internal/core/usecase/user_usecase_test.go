@@ -3,6 +3,7 @@ package usecase_test
 import (
 	"backend-practice/internal/core/entity"
 	"backend-practice/internal/core/usecase"
+	"backend-practice/internal/infra/transport/dto"
 	"errors"
 	"testing"
 
@@ -20,26 +21,30 @@ func (m *mockUserRepository) AddUser(u entity.User) (entity.User, error) {
 }
 
 func TestCreateUser_Success(t *testing.T) {
-	repo := new(mockUserRepository)
-	uc := usecase.NewCreateUserUseCase(repo)
+    repo := new(mockUserRepository)
+    uc := usecase.NewCreateUserUseCase(repo)
 
-	input := entity.User{Name: "Lucas", Email: "lucas@mail.com"}
-	expected := entity.User{ID: 1, Name: "Lucas", Email: "lucas@mail.com"}
+    input := entity.User{Name: "Lucas", Email: "lucas@mail.com", Password: "password"}
+    expected := entity.User{ID: 1, Name: "Lucas", Email: "lucas@mail.com"}
 
-	repo.On("AddUser", input).Return(expected, nil)
+    repo.On("AddUser", mock.MatchedBy(func(u entity.User) bool {
+        return u.Name == input.Name && u.Email == input.Email && u.Password != ""
+    })).Return(expected, nil)
 
-	result, err := uc.CreateUser(input.Name, input.Email)
+    result, err := uc.CreateUser(dto.CreateUserRequest{Name: input.Name, Email: input.Email, Password: input.Password})
 
-	assert.NoError(t, err)
-	assert.Equal(t, expected, result)
-	repo.AssertExpectations(t)
+    assert.NoError(t, err)
+    assert.Equal(t, expected.ID, result.ID)
+    assert.NotNil(t, result.PasswordHash)
+    repo.AssertExpectations(t)
 }
+
 
 func TestCreateUser_InvalidData(t *testing.T) {
 	repo := new(mockUserRepository)
 	uc := usecase.NewCreateUserUseCase(repo)
 
-	_, err := uc.CreateUser("", "")
+	_, err := uc.CreateUser(dto.CreateUserRequest{Name: "", Email: "invalid-email", Password: "password"})
 	assert.Error(t, err)
 	assert.EqualError(t, err, "invalid user data")
 	repo.AssertNotCalled(t, "AddUser")
@@ -49,10 +54,12 @@ func TestCreateUser_RepositoryError(t *testing.T) {
 	repo := new(mockUserRepository)
 	uc := usecase.NewCreateUserUseCase(repo)
 
-	input := entity.User{Name: "Lucas", Email: "lucas@mail.com"}
-	repo.On("AddUser", input).Return(entity.User{}, errors.New("db error"))
+    input := entity.User{Name: "Lucas", Email: "lucas@mail.com", Password: "password"}
+	repo.On("AddUser", mock.MatchedBy(func(u entity.User) bool {
+        return u.Name == input.Name && u.Email == input.Email && u.Password != ""
+    })).Return(entity.User{}, errors.New("db error"))
 
-	_, err := uc.CreateUser(input.Name, input.Email)
+	_, err := uc.CreateUser(dto.CreateUserRequest{Name: input.Name, Email: input.Email, Password: input.Password})
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "db error")

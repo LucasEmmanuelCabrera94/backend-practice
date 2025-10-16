@@ -19,7 +19,8 @@ func setupTestDB(t *testing.T) *sql.DB {
 	_, err = database.Exec(`CREATE TABLE users (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		name TEXT,
-		email TEXT
+		email TEXT,
+		passwordhash TEXT
 	)`)
 	assert.NoError(t, err)
 
@@ -30,8 +31,8 @@ func TestAddUser(t *testing.T) {
 	dbConn := setupTestDB(t)
 	repo := db.NewUserRepository(dbConn)
 
-	user := entity.User{Name: "Lucas", Email: "lucas@example.com"}
-	createdUser, err := repo.AddUser(user)
+	user := entity.User{Name: "Lucas", Email: "lucas@example.com", PasswordHash: "hashedpassword"}
+	createdUser, err := repo.CreateUser(user)
 
 	assert.NoError(t, err)
 	assert.NotZero(t, createdUser.ID)

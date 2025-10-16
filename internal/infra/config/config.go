@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	MySQLDSN string
-	AppPort  string
+	MySQLDSN    string
+	AppPort     string
+	JWTSecret   string
 }
 
 func Load() *Config {
@@ -39,8 +40,9 @@ func Load() *Config {
 	}
 
 	return &Config{
-		MySQLDSN: dsn,
-		AppPort:  getEnv("APP_PORT", "8080"),
+		MySQLDSN:  dsn,
+		AppPort:   getEnv("APP_PORT", "8080"),
+		JWTSecret: getEnv("JWT_SECRET_KEY", "super_secret_key"),
 	}
 }
 

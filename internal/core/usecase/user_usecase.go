@@ -2,28 +2,30 @@ package usecase
 
 import (
 	"backend-practice/internal/core/entity"
-	"backend-practice/internal/core/repository/user"
+	"backend-practice/internal/core/port"
+	"backend-practice/internal/infra/transport/dto"
 	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-type CreateUserUseCase interface {
-	CreateUser(name, email string) (entity.User, error)
+type UserUseCase struct {
+	port port.UserPort
 }
 
-type createUserUseCase struct {
-	repo user.Repository
+func NewCreateUserUseCase(p port.UserPort) *UserUseCase {
+	return &UserUseCase{port: p}
 }
 
-func NewCreateUserUseCase(r user.Repository) CreateUserUseCase {
-	return &createUserUseCase{repo: r}
-}
-
-func (uc *createUserUseCase) CreateUser(name, email string) (entity.User, error) {
-	u := entity.User{Name: name, Email: email}
+func (uc *UserUseCase) CreateUser(req dto.CreateUserRequest) (entity.User, error) {
+	u := entity.User{Name: req.Name, Email: req.Email, Password: req.Password}
 	if !u.IsValid() {
 		return entity.User{}, fmt.Errorf("invalid user data")
 	}
 
-	return uc.repo.AddUser(u)
+	hashed, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	u.PasswordHash = string(hashed)
+	
+	return uc.port.CreateUser(u)
 }
 
