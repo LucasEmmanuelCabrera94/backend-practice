@@ -31,6 +31,7 @@ Exponer el puerto 8080 para interactuar con la API desde Postman, curl o tu nave
 GET /health → Verifica que la API esté levantada.
 
 POST /users → Crear un nuevo usuario en la base de datos.
+POST /login → Iniciar sesión y obtener token JWT.
 ```
 
 Puedes usar Postman o curl para probar los endpoints.
@@ -39,6 +40,14 @@ Puedes usar Postman o curl para probar los endpoints.
 
 ```bash
 curl --location 'http://localhost:8080/health'
+
+curl --location --request POST 'http://localhost:8080/users' \
+--header 'Content-Type: application/json' \
+--data '{"name":"Lucas","email":"lucas@mail.com","password":"secretpw"}'
+
+curl --location --request POST 'http://localhost:8080/login' \
+--header 'Content-Type: application/json' \
+--data '{"email":"lucas@mail.com","password":"secretpw"}'
 ```
 
 ### Variables de entorno
@@ -53,16 +62,18 @@ MYSQL_PASSWORD=backendpw
 MYSQL_DATABASE=backend
 MYSQL_HOST_PORT=3306
 APP_PORT=8080
+JWT_SECRET_KEY=my_ultra_secret_key_123
 ```
 
 ### Detalles técnicos
 
-Go 1.24
-MySQL 8.0
-Gin como framework HTTP
-Arquitectura hexagonal: separando core, usecases y repositorios
-Docker para contenedores y portabilidad
-docker-compose para orquestar app y DB
-Cómo parar los contenedores
-docker compose down
-Esto detiene y elimina los contenedores sin borrar los datos gracias al volumen persistente db_data.
+- Go 1.24
+- MySQL 8.0
+- Gin como framework HTTP
+- Arquitectura hexagonal: separando core, usecases y repositorios
+- Docker para contenedores y portabilidad
+- docker-compose para orquestar app y DB
+- bcrypt para hash de contraseñas
+- JWT para autenticación
+- Mocks con testify para tests unitarios
+- Handlers para exponer endpoints HTTP directos al usecase
